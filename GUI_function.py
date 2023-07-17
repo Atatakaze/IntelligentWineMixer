@@ -4,18 +4,24 @@
 # Author:
 # 	bobo
 # History:
-# 	2022/04/11	@bobo 
+# 	2023/07/17	@bobo 
 
 
 from tkinter import *
 from tkinter import messagebox
 import tkinter as tk
 import tkinter.ttk as ttk
+import numpy as np
+import math
+from joblib import load
+
 from motor_function import motor_init, motor_run, motor_param, Mixing
 
 # ====== <parameters> ====== #
 motor1 = [17, 18, 27, 22]
 motor2 = [10, 9, 11, 8]
+
+MODEL = './model/RF_model_32bit.joblib'
 # ======</parameters> ====== #
 
 # root window
@@ -54,25 +60,25 @@ class Tkwindow():
         self.define_layout(self.window, cols=1, rows=3)
         self.define_layout([div1, div2, div3])
 
-        self.wine1_attributes = {'fixed acidity': 0, 
-                                 'volatile acidity': 0, 
-                                 'citric acid': 0, 
-                                 'residual sugar': 0, 
-                                 'chlorides': 0, 
-                                 'total sulfur dioxide': 0, 
-                                 'density': 0, 
-                                 'pH': 0, 
-                                 'alcohol': 0}
+        self.wine1_attributes = {'fixed acidity': 4.5, 
+                                 'volatile acidity': 0.6, 
+                                 'citric acid': 0.0, 
+                                 'residual sugar': 2.0, 
+                                 'chlorides': 0.0, 
+                                 'total sulfur dioxide': 57, 
+                                 'density': 0.9554, 
+                                 'pH': 3.5, 
+                                 'alcohol': 13.5}
         
-        self.wine2_attributes = {'fixed acidity': 0, 
-                                 'volatile acidity': 0, 
-                                 'citric acid': 0, 
-                                 'residual sugar': 0, 
-                                 'chlorides': 0, 
-                                 'total sulfur dioxide': 0, 
-                                 'density': 0, 
-                                 'pH': 0, 
-                                 'alcohol': 0}
+        self.wine2_attributes = {'fixed acidity': 6.255, 
+                                 'volatile acidity': 0.12, 
+                                 'citric acid': 0.0, 
+                                 'residual sugar': 1.51, 
+                                 'chlorides': 0.0, 
+                                 'total sulfur dioxide': 47, 
+                                 'density': 0.9642, 
+                                 'pH': 3.77, 
+                                 'alcohol': 10.15}
 
         self.window.mainloop()
 
@@ -93,13 +99,6 @@ class Tkwindow():
             trg = obj
             method(trg, cols, rows)
 
-    # basic message box
-    def msg_box(self):
-        messagebox.showinfo('Burette Motor', 'This service is not ready yet.')
-        #messagebox.showwarning('MessageBox Warning', 'There is a warning.')
-        #messagebox.showerror('MessageBox Error', 'There is an error.')
-        #messagebox.askquestion('MessageBox Question', 'Confirm ?')
-
     def wine1(self):
         MakeForm(self.wine1_attributes)
 
@@ -108,29 +107,56 @@ class Tkwindow():
 
     def start(self):
         messagebox.showinfo('INFO', "Start mixing ...")
+
+        # load model
+        model = load(MODEL)
+        # calculating different blending ratio
+        for ratio in range(0, 100, 5):
+            w1 = np.array(ratio / 100)
+            w2 = np.array((100 - ratio) / 100)
+            mix1 = [4.5, 0.6, 0.0, 2.0, 0.0, 57, 0.9554, 3.5, 13.5]
+            mix2 = [6.255, 0.12, 0.0, 1.51, 0.0, 47, 0.9642, 3.77, 10.15]
+            ##### PH ######
+            list1 = mix1.copy()
+            list2 = mix2.copy()
+            H2_1 = 10 ** -list1[7]
+            H2_2 = 10 ** -list2[7]
+            list1.remove(list1[7])
+            list2.remove(list2[7])
+            H2_mix=(w1 * H2_1 + w2 * H2_2) / 1
+            PH_mix = -math.log(H2_mix, 10)
+            wine_mix=(w1 * list1 + w2 * list2)
+            wine_mix1 = wine_mix.tolist()
+            wine_mix2 = wine_mix1.copy()
+            wine_mix2.insert(7,PH_mix)
+
+            if w1 == 0:
+                best_quality = model.predict([mix1])
+                blend_ratio = np.array([w1, w2])
+            elif w2 == 0:
+                prediction = model.predict([mix2])
+                if prediction > best_quality:
+                    blend_ratio = np.array([w1, w2])
+                    best_quality = prediction
+            else:
+                prediction = model.predict([wine_mix2])
+                if prediction > best_quality:
+                    blend_ratio = np.array([w1, w2])
+                    best_quality = prediction
+
         # initial motor1 and motor2
         MOTOR1_STEPS, MOTOR2_STEPS = motor_param()
         SEQUENCE1, SEQUENCE_COUNT1, PIN_COUNT1 = motor_init(motor1)
         SEQUENCE2, SEQUENCE_COUNT2, PIN_COUNT2 = motor_init(motor2)
 
-
-        # ===================================== #
-        # model inference                       #
-        # mixing                                #
-        # ===================================== #
-
-
-        # best ratio = 2:8 
         # total volume = 40
-        DURATION1, DURATION2 = Mixing(8, 32)
+        DURATION1, DURATION2 = Mixing(40 * blend_ratio[0], blend_ratio[1])
 
         # start mixing
         #motor_run(motor1, 1, DURATION1, MOTOR1_STEPS)
         #motor_run(motor2, 2, DURATION2, MOTOR2_STEPS)
 
-        score_msg = "Evaluation score: 6.66"
-        messagebox.showinfo('INFO', 'Mixing finish.')
-        messagebox.showinfo('INFO', score_msg)
+        FinishMessage(blend_ratio=blend_ratio, quality=best_quality)
 
 
 # form window
@@ -212,3 +238,41 @@ class MakeForm(Tkwindow):
         self.wine_attributes['alcohol']  = float(self.en9.get())
 
         self.form.destroy()
+
+
+# finish window
+class FinishMessage(Tkwindow):
+    # custom mode window
+    def __init__(self, blend_ratio, quality):
+        self.msg_page = tk.Tk()
+        self.msg_page.title('Blending results')
+        self.msg_page.geometry('300x150')
+
+        # setting frame of the widget
+        msg_div1 = tk.Frame(self.msg_page, width=300, height=80)
+        msg_div2 = tk.Frame(self.msg_page, width=300, height=40)
+        msg_div3 = tk.Frame(self.msg_page, width=300, height=30)
+
+        msg_div1.grid(column=0, row=0, padx=5, pady=5)
+        msg_div2.grid(column=0, row=1, padx=20)
+        msg_div3.grid(column=0, row=2, padx=30)
+
+        self.define_layout(self.msg_page, cols=1, rows=3)
+        self.define_layout([msg_div1, msg_div2, msg_div3])
+
+        lb1 = tk.Label(msg_div1, text='Quality : {}'.format(np.round(quality, 2)), anchor='w', font=('Arial', 20))
+        lb1.grid(column=0, row=0, padx=10)
+        lb2 = tk.Label(msg_div2, text='(wine1) {}:{} (wine2)'.format(np.round(blend_ratio[0], 2), np.round(blend_ratio[1], 2)), anchor='w', font=('Arial', 14))
+        lb2.grid(column=0, row=1, padx=10)
+
+        bt_1 = tk.Button(msg_div3, text='OK', font=('Arial', 16), bg='gray', fg='white', command=self.confirm, width=100)
+        bt_1.grid(padx=80)
+
+        self.define_layout(self.msg_page, cols=1, rows=3)
+        self.define_layout([msg_div1, msg_div2, msg_div3])
+        
+        self.msg_page.mainloop()
+
+    # confirm
+    def confirm(self):
+        self.msg_page.destroy()
