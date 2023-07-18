@@ -4,7 +4,7 @@
 
 - [Objective](#objective)
 - [File structure](#file-structure)
-- [Hardware](#hardware)
+- [Requirement](#requirement)
 - [Utility](#utility)
 
 ## Objective
@@ -32,11 +32,15 @@ Provide a access for users  to generate higher quality wines via GUI.
 └── LICENSE
 ```
 
-## Hardware
+## Requirement
 
 - Raspberry pi 3B+
 - 28BYJ-45-5V (step motor)
 - ULN2003 (otor driver)
+- datasets : [UCI wine quality](https://archive.ics.uci.edu/dataset/186/wine+quality)
+
+    > Cortez,Paulo, Cerdeira,A., Almeida,F., Matos,T., and Reis,J.. (2009). Wine Quality. UCI Machine Learning Repository. https://doi.org/10.24432/C56S3T.
+
 - Routing (BCM)
 
         # motor 1
