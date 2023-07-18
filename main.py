@@ -7,7 +7,7 @@
 #	2022/04/11	@bobo
 
 
-from GUI_function import Tkwindow
+from scripts.GUI_function import Tkwindow
 import RPi.GPIO as GPIO
 
 # ====== <parameter> ====== #

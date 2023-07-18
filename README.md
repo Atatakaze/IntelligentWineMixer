@@ -16,8 +16,10 @@ Provide a access for users  to generate higher quality wines via GUI.
 ```
 ├── .gitignore
 ├── main.py
-├── GUI_function.py
-├── motor_function.py
+├── scripts
+|   ├── __init__.py
+|   ├── GUI_function.py
+|   └── motor_function.py
 ├── model
 |   ├── train.py
 |   └── winequality.csv
