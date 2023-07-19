@@ -78,13 +78,13 @@ Use `python3 main.py` to launch GUI.
 
 	<img height="180" src="./images/entry_window.jpg">
 
-#### b. Hint
+#### c. Hint
 
 - Click **OK** to start calculating and blending process.
 
 	<img height="100" src="./images/message_window.jpg">
 
-#### b. Finish window
+#### d. Finish window
 
 - Display the quality and the blending ratio of the mix.
 
