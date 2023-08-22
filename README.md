@@ -99,7 +99,7 @@ Use `python3 main.py` to launch GUI.
 
 ```bash
 $ cd ./model/
-$ python3 motor_main.py [-d] <PATH to winequality.csv> [-s] <Save model name>
+$ python3 train.py [-d] <PATH to winequality.csv> [-s] <Save model name>
 ```
 
 ## **License**

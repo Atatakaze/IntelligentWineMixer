@@ -114,8 +114,27 @@ class Tkwindow():
         for ratio in range(0, 100, 5):
             w1 = np.array(ratio / 100)
             w2 = np.array((100 - ratio) / 100)
-            mix1 = [4.5, 0.6, 0.0, 2.0, 0.0, 57, 0.9554, 3.5, 13.5]
-            mix2 = [6.255, 0.12, 0.0, 1.51, 0.0, 47, 0.9642, 3.77, 10.15]
+            # default
+            #mix1 = [4.5, 0.6, 0.0, 2.0, 0.0, 57, 0.9554, 3.5, 13.5]
+            #mix2 = [6.255, 0.12, 0.0, 1.51, 0.0, 47, 0.9642, 3.77, 10.15]
+            mix1 = [self.wine1_attributes['fixed acidity'], 
+                    self.wine1_attributes['volatile acidity'],
+                    self.wine1_attributes['citric acid'],
+                    self.wine1_attributes['residual sugar'],
+                    self.wine1_attributes['chlorides'],
+                    self.wine1_attributes['total sulfur dioxide'],
+                    self.wine1_attributes['density'],
+                    self.wine1_attributes['pH'],
+                    self.wine1_attributes['alcohol']]
+            mix2 = [self.wine2_attributes['fixed acidity'], 
+                    self.wine2_attributes['volatile acidity'],
+                    self.wine2_attributes['citric acid'],
+                    self.wine2_attributes['residual sugar'],
+                    self.wine2_attributes['chlorides'],
+                    self.wine2_attributes['total sulfur dioxide'],
+                    self.wine2_attributes['density'],
+                    self.wine2_attributes['pH'],
+                    self.wine2_attributes['alcohol']]
             ##### PH ######
             list1 = mix1.copy()
             list2 = mix2.copy()
